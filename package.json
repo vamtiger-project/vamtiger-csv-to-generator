@@ -10,7 +10,7 @@
     "vamtiger",
     "parse",
     "csv",
-    "json"
+    "generator"
   ],
   "author": "James-Alex Matthews IV",
   "license": "MIT",
