@@ -1,6 +1,6 @@
 {
   "name": "vamtiger-csv-to-generator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Parse CSV file and reference it as a generator.",
   "main": "index.js",
   "scripts": {
