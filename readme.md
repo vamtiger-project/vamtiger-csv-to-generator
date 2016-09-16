@@ -18,7 +18,7 @@ CSV data can be referenced via a [Generator](https://developer.mozilla.org/en-US
 ```javascript
 const path = require('path'),
     expect = require('chai').expect,
-    VamtigerCsv = require(''vamtiger-csv-to-generator''),
+    VamtigerCsv = require('vamtiger-csv-to-generator'),
     vamtigerCsv = new VamtigerCsv({
         filePath: path.join(__dirname, 'data.csv'),
         separator: ';'
