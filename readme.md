@@ -31,5 +31,6 @@ vamtigerCsv.getData
         const secondRow = data.next().value; // {"Column Tile 1":"Column 1 Row 2","Column Title 2":"Column 2 Row 1"}
 
         data.next().value // undefined
-    });
+    })
+    .catch(handleError); // e.g. File does not exist
 ```
