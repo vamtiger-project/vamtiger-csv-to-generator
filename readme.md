@@ -32,5 +32,6 @@ vamtigerCsv.getData
 
         data.next().value // undefined
     })
-    .catch(handleError); // e.g. File does not exist
+    // Optional, but recommended.
+    .catch(handleError); // e.g. Invalid path to CSV file
 ```
