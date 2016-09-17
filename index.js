@@ -3,7 +3,8 @@
 const fs = require('fs'),
     path = require('path'),
     through = require('through2'),
-    split = require('split');
+    split = require('split'),
+    beautify = require('js-beautify');
 
 class VamtigerCsv {
     constructor(params) {
@@ -12,6 +13,7 @@ class VamtigerCsv {
         this._csvPath = this.__csvPath;
         this._generatorPath = this.__generatorPath;
         this._separator = this.__separator;
+        this._jsFormater = beautify.js_beautify;
     }
 
     get __csvPath() {
@@ -41,59 +43,100 @@ class VamtigerCsv {
         return separator;
     }
 
-    get _processFile () {
-        return new Promise((resolve, reject) => {
-            const csvData = {
-                    header: null,
-                    body: []
-                },
-                csvToJson = (buffer, encoding, next) => {
-                    const line = buffer.toString().split(this._separator),
-                        row = {};
-                    
-                    if (!csvData.header)
-                        csvData.header = line.map(header => header.trim());
-                    else {
-                        line.reduce((row, cell, index) => {
-                            row[csvData.header[index]] = cell.trim();
+    get _readCsv() {
+        const readStream = fs.createReadStream(this._csvPath);
 
-                            return row;
-                        }, row);
+        return readStream;
+    }
 
-                        csvData.body.push(row);
-                    }
-                    
-                    next();
-                },
+    get _splitStream() {
+        const splitStream = split();
+        
+        return splitStream;
+    }
 
-                endCsvToJson = done => {
-                    let generatorCode = `
-                        "use strict";
+    get _csvParseStream() {
+        const csvData = {
+                header: null,
+                body: []
+            },
+            csvParseStream = through(
+                (buffer, encoding, next) => this._parseCsv(buffer, encoding, next, csvData),
+                done => this._parseCsvComplete(csvParseStream, done, csvData)
+            );
 
-                        /**
-                         * Auto-generated
-                         **/
+        return csvParseStream;
+    }
 
-                        module.exports = function *() {
-                            // Header Row
-                            yield ${JSON.stringify(csvData.header)};
+    _parseCsv(buffer, encoding, next, csvData) {
+        const line = buffer.toString().split(this._separator),
+            row = {};
+        
+        if (!csvData.header)
+            csvData.header = line.map(header => header.trim());
+        else {
+            line.reduce((row, cell, index) => {
+                row[csvData.header[index]] = cell.trim();
 
-                            // Body Rows
-                            ${this._yieldRowsCode(csvData.body)}
-                        };
-                    `.replace(/^\s+/gm, '');
+                return row;
+            }, row);
 
-                    csvToJsonStream.push(generatorCode);
-                    resolve(require(this._generatorPath));
-                    done();
-                },
-                csvToJsonStream = through(csvToJson, endCsvToJson);
-            
-            fs.createReadStream(this._csvPath)
-                .pipe(split())
-                .pipe(csvToJsonStream)
-                .pipe(fs.createWriteStream(this._generatorPath));
-        });
+            csvData.body.push(row);
+        }
+        
+        next();
+    }
+
+    _parseCsvComplete(csvParseStream, done, csvData) {
+        const generatorCode = this._formatJs(`
+            "use strict";
+
+            /**
+             * Auto-generated
+             **/
+
+            module.exports = function *() {
+                // Header Row
+                yield ${JSON.stringify(csvData.header)};
+
+                // Body Rows
+                ${this._yieldRowsCode(csvData.body)}
+            };
+        `);
+
+        csvParseStream.push(generatorCode);
+        done();
+    }
+
+    get _writeGenerator() {
+        const writeStream = fs.createWriteStream(this._generatorPath);
+
+        return writeStream;
+    }
+
+    get _csvFileExists() {
+        return new Promise((resolve, reject) =>
+            fs.exists(this._csvPath, exists => {
+                if (exists)
+                    resolve();
+                else
+                    reject(new Error(`Cannot get data from the CSV file.
+                        Reason: The CSV file does not exist.
+                        Invalid Path: ${this._csvPath}
+                    `));
+            })
+        );
+    }
+
+    get _convertCsvToGenerator () {
+        return new Promise((resolve, reject) =>
+            this._readCsv
+                .pipe(this._splitStream)
+                .pipe(this._csvParseStream)
+                .pipe(this._writeGenerator)
+                .on('finish', () => resolve())
+                .on('error', error => reject(error))
+        );
     }
 
     _yieldRowsCode(rows) {
@@ -110,10 +153,24 @@ class VamtigerCsv {
         return yieldRowsCode;
     }
 
+    _formatJs(code) {
+        const formattedCode = this._jsFormater(code, {"indent_size": 4});
+
+        return formattedCode;
+    }
+
+    get _generator() {
+        const generator = require(this._generatorPath);
+
+        return generator();
+    }
+
     get getData() {
-        return new Promise((resolve, reject) => 
-            this._processFile
-                .then(dataGenerator => resolve(dataGenerator()))
+        return new Promise((resolve, reject) =>
+            this._csvFileExists
+                .then(() => this._convertCsvToGenerator)
+                .then(() => this._generator)
+                .then(resolve)
                 .catch(reject)
         );
     }

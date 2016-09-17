@@ -17,14 +17,13 @@ Column 1 Row 2; Column 2 Row 1
 CSV data can be referenced via a [Generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*) **_getData_** _method_.
 ```javascript
 const path = require('path'),
-    expect = require('chai').expect,
     VamtigerCsv = require('vamtiger-csv-to-generator'),
     vamtigerCsv = new VamtigerCsv({
         filePath: path.join(__dirname, 'data.csv'),
         separator: ';'
     });
 
-// Get CSV data as a [Generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*).
+// Get CSV data as a Generator
 vamtigerCsv.getData
     .then(data => {
         const firstRow = data.next().value; // ["Column Tile 1","Column Title 2"]

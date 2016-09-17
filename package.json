@@ -19,6 +19,7 @@
     "mocha": "^3.0.2"
   },
   "dependencies": {
+    "js-beautify": "^1.6.4",
     "split": "^1.0.0",
     "through2": "^2.0.1"
   },
