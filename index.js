@@ -135,7 +135,7 @@ class VamtigerCsv {
                 .pipe(this._csvParseStream)
                 .pipe(this._writeGenerator)
                 .on('finish', () => resolve())
-                .on('error', error => reject(error))
+                .on('error', error =>  fs.exists(this._generatorPath, exists => exists ? resolve() : reject(error)))
         );
     }
 
