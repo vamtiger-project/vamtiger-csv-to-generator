@@ -135,7 +135,7 @@ class VamtigerCsv {
                 .pipe(this._csvParseStream)
                 .pipe(this._writeGenerator)
                 .on('finish', () => resolve())
-                .on('error', error =>  fs.exists(this._generatorPath, exists => exists ? resolve() : reject(error)))
+                .on('error', error => reject(error))
         );
     }
 
@@ -166,13 +166,16 @@ class VamtigerCsv {
     }
 
     get getData() {
-        return new Promise((resolve, reject) =>
-            this._csvFileExists
-                .then(() => this._convertCsvToGenerator)
-                .then(() => this._generator)
-                .then(resolve)
-                .catch(reject)
-        );
+        return new Promise((resolve, reject) => {
+            if (!this.params.ignoreCsv) {
+                this._csvFileExists
+                    .then(() => this._convertCsvToGenerator)
+                    .then(() => this._generator)
+                    .then(resolve)
+                    .catch(reject)
+            } else
+                resolve(this._generator);
+        });
     }
 }
 

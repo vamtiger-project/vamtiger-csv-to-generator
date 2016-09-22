@@ -74,6 +74,19 @@ describe('Vamtiger CSV to Generator', function () {
                 .then(() => done())
                 .catch(done);
         });
+
+        it('NOT parse the CSV file when the "ignoreCsv" parameter is "true"', function (done) {            
+            vamtigerCsv = new VamtigerCsv({
+                filePath: path.join(__dirname, 'data.csv'),
+                separator: ';',
+                ignoreCsv: true
+            });
+
+            vamtigerCsv.getData
+                .then(data => expect(/generator/i.test(data.toString())).to.equal(true))
+                .then(() => done())
+                .catch(done);
+        });
     });
 
     describe('should resolve with an error', function () {
