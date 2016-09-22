@@ -167,14 +167,11 @@ class VamtigerCsv {
 
     get getData() {
         return new Promise((resolve, reject) => {
-            if (!this.params.ignoreCsv) {
-                this._csvFileExists
-                    .then(() => this._convertCsvToGenerator)
-                    .then(() => this._generator)
-                    .then(resolve)
-                    .catch(reject)
-            } else
-                resolve(this._generator);
+            this._csvFileExists
+                .then(() => this._convertCsvToGenerator)
+                .then(() => this._generator)
+                .then(resolve)
+                .catch(reject);
         });
     }
 }
